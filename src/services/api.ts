@@ -1,19 +1,20 @@
 import axios from 'axios';
 
-const API_URL = 'https://humayat-backend.onrender.com';
+const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+
+const axiosInstance = axios.create({
+  baseURL: BASE_URL,
+  timeout: 10000,
+});
 
 export const api = {
-  uploadPhoto: async (formData: FormData) => {
-    const response = await axios.post(`${API_URL}/api/images/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
-
-  getPhotos: async () => {
-    const response = await axios.get(`${API_URL}/api/images`);
-    return response.data;
-  },
+  // Fotoğraf işlemleri
+  getPhotos: () => axiosInstance.get('/photos'),
+  getPhoto: (id: string) => axiosInstance.get(`/photos/${id}`),
+  uploadPhoto: (formData: FormData) => axiosInstance.post('/photos/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  }),
+  searchPhotos: (query: string) => axiosInstance.get(`/photos/search?q=${query}`),
 }; 
