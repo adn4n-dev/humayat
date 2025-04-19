@@ -25,33 +25,46 @@ const upload = multer({ storage });
 
 // Connect to MongoDB
 mongoose.connect(config.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
+  .then(() => console.log('Connected to MongoDB successfully'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
 app.get('/api/images', async (req, res) => {
   try {
+    console.log('Fetching images from database...');
     const images = await Image.find().sort({ createdAt: -1 });
+    console.log('Found images:', images);
     res.json(images);
   } catch (error) {
-    res.status(500).json({ error: 'Error fetching images' });
+    console.error('Error in GET /api/images:', error);
+    res.status(500).json({ error: 'Error fetching images', details: error.message });
   }
 });
 
 app.post('/api/images/upload', upload.single('image'), async (req, res) => {
   try {
+    console.log('Starting image upload...');
     if (!req.file) {
+      console.error('No file provided in request');
       return res.status(400).json({ error: 'No image file provided' });
     }
+
+    console.log('File received:', {
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      title: req.body.title
+    });
 
     // Convert buffer to base64
     const b64 = Buffer.from(req.file.buffer).toString('base64');
     const dataURI = `data:${req.file.mimetype};base64,${b64}`;
 
+    console.log('Uploading to Cloudinary...');
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(dataURI, {
       resource_type: 'auto'
     });
+    console.log('Cloudinary upload successful:', result.secure_url);
 
     // Create new image document
     const newImage = new Image({
@@ -60,15 +73,24 @@ app.post('/api/images/upload', upload.single('image'), async (req, res) => {
       cloudinaryId: result.public_id
     });
 
+    console.log('Saving to MongoDB...');
     await newImage.save();
+    console.log('Image saved successfully');
+    
     res.status(201).json(newImage);
   } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'Error uploading image' });
+    console.error('Error in POST /api/images/upload:', error);
+    res.status(500).json({ error: 'Error uploading image', details: error.message });
   }
 });
 
 const PORT = config.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Environment variables loaded:', {
+    MONGODB_URI: config.MONGODB_URI ? 'Set' : 'Not set',
+    CLOUDINARY_CLOUD_NAME: config.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Not set',
+    CLOUDINARY_API_KEY: config.CLOUDINARY_API_KEY ? 'Set' : 'Not set',
+    CLOUDINARY_API_SECRET: config.CLOUDINARY_API_SECRET ? 'Set' : 'Not set'
+  });
 }); 
