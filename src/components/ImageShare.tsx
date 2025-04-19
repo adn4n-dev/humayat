@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+const API_URL = 'https://humayat-backend.onrender.com';
+
 interface Image {
   id: string;
   url: string;
@@ -14,6 +16,7 @@ const ImageShare: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchImages();
@@ -21,12 +24,14 @@ const ImageShare: React.FC = () => {
 
   const fetchImages = async () => {
     try {
-      console.log('Fetching images from:', '/api/images');
-      const response = await axios.get('/api/images');
+      console.log('Fetching images from:', `${API_URL}/api/images`);
+      const response = await axios.get(`${API_URL}/api/images`);
       console.log('Received images:', response.data);
       setImages(response.data);
+      setError(null);
     } catch (error) {
       console.error('Error fetching images:', error);
+      setError('Resimleri yüklerken bir hata oluştu');
     }
   };
 
@@ -41,17 +46,21 @@ const ImageShare: React.FC = () => {
     if (!selectedFile || !title) return;
 
     setLoading(true);
+    setError(null);
     const formData = new FormData();
     formData.append('image', selectedFile);
     formData.append('title', title);
 
     try {
-      await axios.post('/api/images/upload', formData);
+      console.log('Uploading image to:', `${API_URL}/api/images/upload`);
+      const response = await axios.post(`${API_URL}/api/images/upload`, formData);
+      console.log('Upload response:', response.data);
       setTitle('');
       setSelectedFile(null);
       fetchImages();
     } catch (error) {
       console.error('Error uploading image:', error);
+      setError('Resim yüklenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -84,6 +93,11 @@ const ImageShare: React.FC = () => {
             />
           </label>
         </div>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <button
           type="submit"
           disabled={loading || !selectedFile || !title}
