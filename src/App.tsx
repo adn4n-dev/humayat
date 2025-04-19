@@ -10,6 +10,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import SplashScreen from './components/SplashScreen';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -22,9 +23,9 @@ function App() {
     <Router>
       <UserProvider>
         <PhotoProvider>
-          <div className="min-h-screen bg-dark-900 text-primary-300">
+          <div className="min-h-screen bg-dark-900 text-primary-300 flex flex-col">
             <Navbar />
-            <main className="container mx-auto px-4 py-8">
+            <main className="container mx-auto px-4 py-8 flex-grow">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/photo/:id" element={<PhotoDetailPage />} />
@@ -32,6 +33,7 @@ function App() {
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
+            <Footer />
             <Toaster
               position="bottom-right"
               toastOptions={{

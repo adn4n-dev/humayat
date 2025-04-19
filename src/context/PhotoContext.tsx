@@ -1,24 +1,17 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import toast from 'react-hot-toast';
 import { api } from '../services/api';
 import { Photo } from '../types';
 
 interface PhotoContextType {
   photos: Photo[];
-  addPhoto: (photo: Omit<Photo, 'id' | 'uploadedAt'>) => void;
-  getPhoto: (id: string) => Photo | undefined;
+  uploadPhoto: (file: File, title: string) => Promise<void>;
+  getPhoto: (id: string) => Promise<Photo | null>;
+  deletePhoto: (id: string) => Promise<boolean>;
   searchPhotos: (query: string) => Photo[];
-  loading: boolean;
 }
 
-const defaultContext: PhotoContextType = {
-  photos: [],
-  addPhoto: () => {},
-  getPhoto: () => undefined,
-  searchPhotos: () => [],
-  loading: true
-};
-
-const PhotoContext = createContext<PhotoContextType>(defaultContext);
+const PhotoContext = createContext<PhotoContextType | undefined>(undefined);
 
 export const usePhotoContext = () => {
   const context = useContext(PhotoContext);
@@ -30,45 +23,53 @@ export const usePhotoContext = () => {
 
 export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchPhotos();
-  }, []);
-
-  const fetchPhotos = async () => {
+  const uploadPhoto = async (file: File, title: string) => {
     try {
-      const fetchedPhotos = await api.getPhotos();
-      setPhotos(fetchedPhotos);
+      // Simüle edilmiş yükleme
+      const newPhoto: Photo = {
+        _id: Date.now().toString(),
+        title,
+        url: URL.createObjectURL(file),
+        uploadedBy: 'adnan(bibi)',
+        createdAt: new Date().toISOString(),
+      };
+
+      setPhotos(prev => [newPhoto, ...prev]);
+      toast.success('Humayat başarıyla yüklendi!');
     } catch (error) {
-      console.error('Error fetching photos:', error);
-      setPhotos([]); // Set empty array on error
-    } finally {
-      setLoading(false);
+      console.error('Upload error:', error);
+      toast.error('Humayat yüklenirken bir hata oluştu.');
+      throw error;
     }
   };
 
-  const addPhoto = async (photoData: Omit<Photo, 'id' | 'uploadedAt'>) => {
-    setPhotos(prev => [photoData as Photo, ...prev]);
+  const getPhoto = async (id: string): Promise<Photo | null> => {
+    const photo = photos.find(p => p._id === id);
+    return photo || null;
   };
 
-  const getPhoto = (id: string) => {
-    return photos.find(photo => photo.id === id);
+  const deletePhoto = async (id: string): Promise<boolean> => {
+    try {
+      setPhotos(prev => prev.filter(photo => photo._id !== id));
+      toast.success('Humayat başarıyla silindi!');
+      return true;
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Humayat silinirken bir hata oluştu.');
+      return false;
+    }
   };
 
-  const searchPhotos = (query: string) => {
-    const lowerQuery = query.toLowerCase();
-    return photos.filter(
-      photo =>
-        photo.title.toLowerCase().includes(lowerQuery) ||
-        photo.description.toLowerCase().includes(lowerQuery) ||
-        photo.tags.some(tag => tag.toLowerCase().includes(lowerQuery)) ||
-        photo.uploadedBy.toLowerCase().includes(lowerQuery)
+  const searchPhotos = (query: string): Photo[] => {
+    const lowercaseQuery = query.toLowerCase();
+    return photos.filter(photo =>
+      photo.title.toLowerCase().includes(lowercaseQuery)
     );
   };
 
   return (
-    <PhotoContext.Provider value={{ photos, addPhoto, getPhoto, searchPhotos, loading }}>
+    <PhotoContext.Provider value={{ photos, uploadPhoto, getPhoto, deletePhoto, searchPhotos }}>
       {children}
     </PhotoContext.Provider>
   );
