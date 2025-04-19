@@ -16,6 +16,23 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Multer configuration for handling file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+      return cb(new Error('Only image files are allowed!'), false);
+    }
+    cb(null, true);
+  }
+});
 
 // Welcome page
 app.get('/', (req, res) => {
@@ -42,10 +59,6 @@ cloudinary.config({
   api_secret: config.CLOUDINARY_API_SECRET
 });
 
-// Multer configuration for handling file uploads
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
 // Connect to MongoDB
 mongoose.connect(config.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB successfully'))
@@ -67,6 +80,9 @@ app.get('/api/images', async (req, res) => {
 app.post('/api/images/upload', upload.single('image'), async (req, res) => {
   try {
     console.log('Starting image upload...');
+    console.log('Request body:', req.body);
+    console.log('Request file:', req.file);
+
     if (!req.file) {
       console.error('No file provided in request');
       return res.status(400).json({ error: 'No image file provided' });
@@ -85,15 +101,17 @@ app.post('/api/images/upload', upload.single('image'), async (req, res) => {
     console.log('Uploading to Cloudinary...');
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(dataURI, {
-      resource_type: 'auto'
+      resource_type: 'auto',
+      folder: 'humayat'
     });
     console.log('Cloudinary upload successful:', result.secure_url);
 
     // Create new image document
     const newImage = new Image({
-      title: req.body.title,
+      title: req.body.title || 'Untitled',
       url: result.secure_url,
-      cloudinaryId: result.public_id
+      cloudinaryId: result.public_id,
+      uploadedBy: 'Anonymous'
     });
 
     console.log('Saving to MongoDB...');
