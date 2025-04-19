@@ -1,149 +1,95 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, Share } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { usePhotoContext } from '../context/PhotoContext';
-import PhotoDetail from '../components/photo/PhotoDetail';
-import EmptyState from '../components/common/EmptyState';
+import { ArrowLeft, Download } from 'lucide-react';
 
 const PhotoDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { photos, getPhoto } = usePhotoContext();
-  const [photo, setPhoto] = useState(id ? getPhoto(id) : undefined);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [showShareTooltip, setShowShareTooltip] = useState(false);
+  const { getPhoto } = usePhotoContext();
+  const [photo, setPhoto] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      const foundPhoto = getPhoto(id);
-      setPhoto(foundPhoto);
-      
-      if (foundPhoto && photos.length > 0) {
-        const index = photos.findIndex(p => p.id === foundPhoto.id);
-        if (index !== -1) {
-          setCurrentIndex(index);
-        }
+    const fetchPhoto = async () => {
+      if (!id) return;
+      try {
+        const photoData = await getPhoto(id);
+        setPhoto(photoData);
+      } catch (error) {
+        console.error('Error fetching photo:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [id, getPhoto, photos]);
+    };
 
-  const handlePrevPhoto = () => {
-    if (currentIndex > 0) {
-      const prevPhoto = photos[currentIndex - 1];
-      navigate(`/photo/${prevPhoto.id}`);
-    }
-  };
+    fetchPhoto();
+  }, [id, getPhoto]);
 
-  const handleNextPhoto = () => {
-    if (currentIndex < photos.length - 1) {
-      const nextPhoto = photos[currentIndex + 1];
-      navigate(`/photo/${nextPhoto.id}`);
-    }
-  };
-
-  const handleShareClick = () => {
-    if (navigator.share && photo) {
-      navigator.share({
-        title: photo.title,
-        text: photo.description,
-        url: window.location.href,
-      }).catch(() => {
-        // Fallback: copy link to clipboard
-        navigator.clipboard.writeText(window.location.href);
-        setShowShareTooltip(true);
-        setTimeout(() => setShowShareTooltip(false), 2000);
-      });
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      navigator.clipboard.writeText(window.location.href);
-      setShowShareTooltip(true);
-      setTimeout(() => setShowShareTooltip(false), 2000);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
 
   if (!photo) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="mb-6">
-          <Link 
-            to="/" 
-            className="inline-flex items-center text-gray-600 hover:text-indigo-600 transition-colors duration-200"
+      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-primary-300 mb-4">Humayat bulunamadı</h1>
+          <button
+            onClick={() => navigate('/')}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
           >
-            <ChevronLeft className="w-5 h-5 mr-1" />
-            <span>humayatlara geri dön</span>
-          </Link>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span>Ana Sayfaya Dön</span>
+          </button>
         </div>
-        
-        <EmptyState 
-          title="fotoğraf bulunmadı" 
-          message="The photo you're looking for doesn't exist or may have been removed."
-        />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-6">
-        <Link 
-          to="/" 
-          className="inline-flex items-center text-gray-600 hover:text-indigo-600 transition-colors duration-200"
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/')}
+          className="inline-flex items-center text-primary-400 hover:text-primary-300 transition-colors duration-200"
         >
-          <ChevronLeft className="w-5 h-5 mr-1" />
-          <span>humayatlara geri dön</span>
-        </Link>
-        
-        <div className="relative">
-          <button
-            onClick={handleShareClick}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-colors duration-200"
-          >
-            <Share className="w-4 h-4 mr-1" />
-            <span>paylas</span>
-          </button>
-          
-          {showShareTooltip && (
-            <div className="absolute right-0 top-full mt-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-md shadow-lg z-10 whitespace-nowrap">
-              humayat linki kopyalanDİ
+          <ArrowLeft className="w-5 h-5 mr-1" />
+          <span>Geri</span>
+        </button>
+      </div>
+
+      <div className="bg-dark-800 rounded-lg shadow-lg overflow-hidden border border-dark-700">
+        <div className="p-6">
+          <h1 className="text-2xl font-bold text-primary-300 mb-4">{photo.title}</h1>
+          <div className="aspect-w-16 aspect-h-9 mb-6">
+            <img
+              src={photo.url}
+              alt={photo.title}
+              className="w-full h-full object-contain rounded-lg"
+            />
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-primary-400">
+              <span>Yükleyen: {photo.uploadedBy}</span>
+              <span className="mx-2">•</span>
+              <span>{new Date(photo.createdAt).toLocaleDateString('tr-TR')}</span>
             </div>
-          )}
-        </div>
-      </div>
-      
-      <div className="mb-12">
-        <PhotoDetail 
-          photo={photo}
-          nextPhoto={currentIndex < photos.length - 1 ? handleNextPhoto : undefined}
-          prevPhoto={currentIndex > 0 ? handlePrevPhoto : undefined}
-          hasNext={currentIndex < photos.length - 1}
-          hasPrev={currentIndex > 0}
-        />
-      </div>
-      
-      {photos.length > 1 && (
-        <div className="mb-12">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">baska humayatlar</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {photos
-              .filter(p => p.id !== photo.id)
-              .slice(0, 6)
-              .map(p => (
-                <Link 
-                  key={p.id} 
-                  to={`/photo/${p.id}`}
-                  className="block aspect-square overflow-hidden rounded-md hover:opacity-90 transition-opacity duration-200"
-                >
-                  <img 
-                    src={p.url} 
-                    alt={p.title} 
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </Link>
-              ))}
+            <a
+              href={photo.url}
+              download
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              <span>İndir</span>
+            </a>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
