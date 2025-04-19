@@ -10,7 +10,15 @@ interface PhotoContextType {
   loading: boolean;
 }
 
-const PhotoContext = createContext<PhotoContextType | undefined>(undefined);
+const defaultContext: PhotoContextType = {
+  photos: [],
+  addPhoto: () => {},
+  getPhoto: () => undefined,
+  searchPhotos: () => [],
+  loading: true
+};
+
+const PhotoContext = createContext<PhotoContextType>(defaultContext);
 
 export const usePhotoContext = () => {
   const context = useContext(PhotoContext);
@@ -34,6 +42,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setPhotos(fetchedPhotos);
     } catch (error) {
       console.error('Error fetching photos:', error);
+      setPhotos([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
