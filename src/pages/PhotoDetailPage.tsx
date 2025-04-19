@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePhotoContext } from '../context/PhotoContext';
-import { ArrowLeft, Download, Trash2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { ArrowLeft, Download } from 'lucide-react';
 
 const PhotoDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getPhoto, deletePhoto } = usePhotoContext();
+  const { getPhoto } = usePhotoContext();
   const [photo, setPhoto] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchPhoto = async () => {
@@ -27,23 +25,6 @@ const PhotoDetailPage: React.FC = () => {
 
     fetchPhoto();
   }, [id, getPhoto]);
-
-  const handleDelete = async () => {
-    if (!id || !window.confirm('Bu humayatı silmek istediğinize emin misiniz?')) return;
-    
-    setIsDeleting(true);
-    try {
-      const success = await deletePhoto(id);
-      if (success) {
-        navigate('/');
-      }
-    } catch (error) {
-      console.error('Error deleting photo:', error);
-      toast.error('Humayat silinirken bir hata oluştu');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -72,24 +53,13 @@ const PhotoDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="mb-6 flex justify-between items-center">
+      <div className="mb-6">
         <button
           onClick={() => navigate('/')}
           className="inline-flex items-center text-primary-400 hover:text-primary-300 transition-colors duration-200"
         >
           <ArrowLeft className="w-5 h-5 mr-1" />
           <span>Geri</span>
-        </button>
-
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
-            isDeleting && 'opacity-50 cursor-not-allowed'
-          }`}
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          <span>{isDeleting ? 'Siliniyor...' : 'Sil'}</span>
         </button>
       </div>
 

@@ -7,7 +7,6 @@ interface PhotoContextType {
   photos: Photo[];
   uploadPhoto: (file: File, title: string) => Promise<void>;
   getPhoto: (id: string) => Promise<Photo | null>;
-  deletePhoto: (id: string) => Promise<boolean>;
   searchPhotos: (query: string) => Photo[];
 }
 
@@ -49,18 +48,6 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return photo || null;
   };
 
-  const deletePhoto = async (id: string): Promise<boolean> => {
-    try {
-      setPhotos(prev => prev.filter(photo => photo._id !== id));
-      toast.success('Humayat başarıyla silindi!');
-      return true;
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast.error('Humayat silinirken bir hata oluştu.');
-      return false;
-    }
-  };
-
   const searchPhotos = (query: string): Photo[] => {
     const lowercaseQuery = query.toLowerCase();
     return photos.filter(photo =>
@@ -69,7 +56,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   return (
-    <PhotoContext.Provider value={{ photos, uploadPhoto, getPhoto, deletePhoto, searchPhotos }}>
+    <PhotoContext.Provider value={{ photos, uploadPhoto, getPhoto, searchPhotos }}>
       {children}
     </PhotoContext.Provider>
   );
