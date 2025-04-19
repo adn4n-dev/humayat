@@ -77,6 +77,25 @@ app.get('/api/images', async (req, res) => {
   }
 });
 
+// Get single photo by ID
+app.get('/api/images/:id', async (req, res) => {
+  try {
+    console.log('Fetching photo with ID:', req.params.id);
+    const photo = await Image.findById(req.params.id);
+    
+    if (!photo) {
+      console.log('Photo not found with ID:', req.params.id);
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+    
+    console.log('Found photo:', photo);
+    res.json(photo);
+  } catch (error) {
+    console.error('Error in GET /api/images/:id:', error);
+    res.status(500).json({ error: 'Error fetching photo', details: error.message });
+  }
+});
+
 app.post('/api/images/upload', upload.single('image'), async (req, res) => {
   try {
     console.log('Starting image upload...');
