@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Upload, X, Plus, Image as ImageIcon } from 'lucide-react';
 import { useUserContext } from '../../context/UserContext';
 import { usePhotoContext } from '../../context/PhotoContext';
+import { api } from '../../services/api';
 
 const PhotoUploadForm: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const PhotoUploadForm: React.FC = () => {
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [photoUrl, setPhotoUrl] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -44,6 +46,8 @@ const PhotoUploadForm: React.FC = () => {
         return;
       }
       
+      setSelectedFile(file);
+      
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -59,7 +63,7 @@ const PhotoUploadForm: React.FC = () => {
     
     if (!title.trim()) newErrors.title = 'baslık girin';
     if (!description.trim()) newErrors.description = 'acıklama..';
-    if (!photoUrl) newErrors.photo = 'foto sec';
+    if (!selectedFile) newErrors.photo = 'foto sec';
     if (!currentUser) newErrors.user = 'Please select a Humayat user identity';
     
     setErrors(newErrors);
@@ -74,18 +78,27 @@ const PhotoUploadForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      if (selectedFile) {
+        formData.append('image', selectedFile);
+      }
+      formData.append('tags', JSON.stringify(tags.length > 0 ? tags : ['humayat']));
+      formData.append('uploadedBy', currentUser!.name);
+
+      const response = await api.uploadPhoto(formData);
+      
       addPhoto({
-        url: photoUrl,
-        title,
-        description,
-        uploadedBy: currentUser!.name,
+        ...response,
         tags: tags.length > 0 ? tags : ['humayat']
       });
       
       setIsSubmitting(false);
       navigate('/');
     } catch (error) {
-      setErrors({ general: 'An error occurred while uploading to Humayat' });
+      console.error('Upload error:', error);
+      setErrors({ general: 'Humayat yüklenirken bir hata oluştu' });
       setIsSubmitting(false);
     }
   };

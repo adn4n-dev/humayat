@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { api } from '../services/api';
 import { Photo } from '../types';
 
 interface PhotoContextType {
@@ -10,43 +10,37 @@ interface PhotoContextType {
   loading: boolean;
 }
 
-const PhotoContext = createContext<PhotoContextType>({
-  photos: [],
-  addPhoto: () => {},
-  getPhoto: () => undefined,
-  searchPhotos: () => [],
-  loading: true
-});
+const PhotoContext = createContext<PhotoContextType | undefined>(undefined);
 
-export const usePhotoContext = () => useContext(PhotoContext);
+export const usePhotoContext = () => {
+  const context = useContext(PhotoContext);
+  if (!context) {
+    throw new Error('usePhotoContext must be used within a PhotoProvider');
+  }
+  return context;
+};
 
 export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load photos from localStorage
   useEffect(() => {
-    const savedPhotos = localStorage.getItem('photoArchive');
-    if (savedPhotos) {
-      setPhotos(JSON.parse(savedPhotos));
-    }
-    setLoading(false);
+    fetchPhotos();
   }, []);
 
-  // Save photos to localStorage whenever they change
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('photoArchive', JSON.stringify(photos));
+  const fetchPhotos = async () => {
+    try {
+      const fetchedPhotos = await api.getPhotos();
+      setPhotos(fetchedPhotos);
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [photos, loading]);
+  };
 
-  const addPhoto = (photoData: Omit<Photo, 'id' | 'uploadedAt'>) => {
-    const newPhoto: Photo = {
-      ...photoData,
-      id: uuidv4(),
-      uploadedAt: Date.now()
-    };
-    setPhotos(prev => [newPhoto, ...prev]);
+  const addPhoto = async (photoData: Omit<Photo, 'id' | 'uploadedAt'>) => {
+    setPhotos(prev => [photoData as Photo, ...prev]);
   };
 
   const getPhoto = (id: string) => {
