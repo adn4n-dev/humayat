@@ -37,7 +37,17 @@ const ImageShare: React.FC = () => {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
+      const file = event.target.files[0];
+      if (file.size > 10 * 1024 * 1024) { // 10MB
+        setError('Dosya boyutu 10MB\'dan küçük olmalıdır');
+        return;
+      }
+      if (!file.type.match(/^image\/(jpeg|png|gif)$/)) {
+        setError('Sadece JPG, PNG ve GIF dosyaları yüklenebilir');
+        return;
+      }
+      setSelectedFile(file);
+      setError(null);
     }
   };
 
@@ -53,14 +63,24 @@ const ImageShare: React.FC = () => {
 
     try {
       console.log('Uploading image to:', `${API_URL}/api/images/upload`);
-      const response = await axios.post(`${API_URL}/api/images/upload`, formData);
+      console.log('FormData contents:', {
+        title: formData.get('title'),
+        image: formData.get('image')
+      });
+
+      const response = await axios.post(`${API_URL}/api/images/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       console.log('Upload response:', response.data);
       setTitle('');
       setSelectedFile(null);
       fetchImages();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
-      setError('Resim yüklenirken bir hata oluştu');
+      setError(error.response?.data?.error || 'Resim yüklenirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
