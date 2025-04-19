@@ -21,7 +21,9 @@ const ImageShare: React.FC = () => {
 
   const fetchImages = async () => {
     try {
+      console.log('Fetching images from:', '/api/images');
       const response = await axios.get('/api/images');
+      console.log('Received images:', response.data);
       setImages(response.data);
     } catch (error) {
       console.error('Error fetching images:', error);
