@@ -86,7 +86,7 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
 
       const formData = new FormData();
-      formData.append('photo', file);
+      formData.append('image', file);
       formData.append('title', title);
 
       const response = await api.uploadPhoto(formData);
