@@ -42,9 +42,10 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const response = await api.getPhotos();
       setPhotos(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching photos:', error);
-      toast.error('Fotoğraflar yüklenirken bir hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Fotoğraflar yüklenirken bir hata oluştu';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -52,6 +53,18 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const uploadPhoto = async (file: File, title: string) => {
     try {
+      // Dosya boyutu kontrolü (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Dosya boyutu 10MB\'dan büyük olamaz');
+        return;
+      }
+
+      // Dosya tipi kontrolü
+      if (!file.type.startsWith('image/')) {
+        toast.error('Sadece resim dosyaları yüklenebilir');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('photo', file);
       formData.append('title', title);
@@ -59,9 +72,10 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const response = await api.uploadPhoto(formData);
       setPhotos(prev => [response.data, ...prev]);
       toast.success('Humayat başarıyla yüklendi!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Humayat yüklenirken bir hata oluştu.');
+      const errorMessage = error.response?.data?.message || 'Humayat yüklenirken bir hata oluştu';
+      toast.error(errorMessage);
       throw error;
     }
   };
@@ -70,9 +84,10 @@ export const PhotoProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const response = await api.getPhoto(id);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching photo:', error);
-      toast.error('Fotoğraf yüklenirken bir hata oluştu');
+      const errorMessage = error.response?.data?.message || 'Fotoğraf yüklenirken bir hata oluştu';
+      toast.error(errorMessage);
       return null;
     }
   };
