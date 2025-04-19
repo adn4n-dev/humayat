@@ -1,11 +1,11 @@
 export interface Photo {
-  id: string;
+  _id: string;
   url: string;
   title: string;
-  description: string;
   uploadedBy: string;
-  uploadedAt: number;
-  tags: string[];
+  cloudinaryId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface User {
