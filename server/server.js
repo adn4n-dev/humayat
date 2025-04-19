@@ -12,6 +12,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Welcome page
+app.get('/', (req, res) => {
+  res.send(`
+    <h1>Humayat Backend API</h1>
+    <p>Available endpoints:</p>
+    <ul>
+      <li>GET /api/images - Get all images</li>
+      <li>POST /api/images/upload - Upload a new image</li>
+    </ul>
+    <p>Status: Server is running</p>
+    <p>Environment:</p>
+    <ul>
+      <li>MongoDB: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Not Connected'}</li>
+      <li>Cloudinary: Configured</li>
+    </ul>
+  `);
+});
+
 // Cloudinary configuration
 cloudinary.config({
   cloud_name: config.CLOUDINARY_CLOUD_NAME,
